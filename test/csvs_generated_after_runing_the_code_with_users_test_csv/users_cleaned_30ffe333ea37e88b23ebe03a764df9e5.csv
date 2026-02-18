@@ -1,0 +1,3 @@
+user_id,name,email,signup_date,country,age,subscription_tier
+1,Juan Perez,juan@email.com,2024-01-10,Argentina,30,basic
+2,Maria Lopez,maria@email.com,2023-11-22,Brasil,25,premium

@@ -1,0 +1,5 @@
+user_id,name,email,signup_date,country,age,subscription_tier
+3,Carlos Ruiz,carlos@email,2024-02-01,Chile,28,free
+4,Ana Torres,ana@email.com,,Uruguay,22,basic
+5,Pedro Gomez,pedro@email.com,2024-02-05,Peru,-5,free
+6,Laura Diaz,laura@email.com,2024-01-15,Colombia,35,vip
