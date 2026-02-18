@@ -1,33 +1,64 @@
 # Containerized Serverless Data Ingestion Pipeline
 
-A modular, idempotent data ingestion pipeline built with AWS Lambda using a Docker container image stored in Amazon ECR.
+A production-style, event-driven data ingestion pipeline built on AWS using containerized Lambda.
 
-This project demonstrates production-style serverless architecture with data normalization, schema validation, row-level validation, and content-based idempotency.
+The system performs schema validation, row-level validation, normalization, and content-based idempotency using MD5 hashing.
 
 ---
 
-## 🚀 Architecture
+## 🏗️ Cloud Architecture
 
-S3 Upload  
-→ Lambda (Container Image)  
-→ Download File  
-→ Content Hash (MD5)  
-→ Normalize Data  
-→ Validate Schema  
-→ Split Valid / Invalid  
-→ Upload Results to S3  
+This solution follows a fully serverless, event-driven architecture.
+
+```mermaid
+flowchart TD
+
+    A[S3 Bucket<br>CSV Upload] -->|ObjectCreated Event| B[AWS Lambda<br>Container Image]
+
+    B --> C[Download File from S3]
+    C --> D[Calculate MD5 Hash]
+
+    D --> E{Already Processed?}
+
+    E -- Yes --> F[Skip Execution]
+    E -- No --> G[Normalize Data]
+
+    G --> H[Validate Schema]
+    H --> I[Row-level Validation]
+
+    I --> J[Valid Records]
+    I --> K[Invalid Records]
+
+    J --> L[Upload to processed/]
+    K --> M[Upload to errors/]
+
+    B --> N[CloudWatch Logs]
+```
+
+---
+
+## 🔁 Event Flow
+
+1. A CSV file is uploaded to Amazon S3.  
+2. An `ObjectCreated` event triggers AWS Lambda.  
+3. The Lambda container downloads the file.  
+4. An MD5 hash is computed for idempotency.  
+5. If already processed → execution stops.  
+6. If new → data is normalized and validated.  
+7. Valid and invalid records are separated.  
+8. Results are uploaded back to S3.  
 
 ---
 
 ## 🐳 Container-Based Deployment
 
-Due to dependency size (Pandas + scientific stack), this Lambda is deployed using a Docker image instead of a ZIP package.
+Because of dependency size (Pandas + scientific stack), the function is deployed as a container image instead of a ZIP package.
 
-The image is:
+The image lifecycle:
 
-- Built locally using Docker
-- Pushed to Amazon ECR
-- Referenced by AWS Lambda as its runtime image
+- Built locally with Docker  
+- Pushed to Amazon ECR  
+- Referenced by AWS Lambda as runtime image  
 
 ---
 
@@ -37,6 +68,7 @@ The image is:
 - AWS Lambda (Container Image)
 - Amazon S3
 - Amazon ECR
+- Amazon CloudWatch
 - Pandas
 - Boto3
 - Docker
@@ -45,6 +77,7 @@ The image is:
 
 ## 📂 Project Structure
 
+```
 serverless-data-ingestion-pipeline/
 │
 ├── src/
@@ -60,78 +93,78 @@ serverless-data-ingestion-pipeline/
 ├── requirements.txt
 ├── README.md
 └── .gitignore
+```
+
+---
 
 ## 🔐 Idempotency Strategy
 
-Each uploaded file is hashed using MD5 before processing.
+Each file is hashed using MD5 before processing.
 
-If a file with the same content has already been processed,
-the pipeline prevents duplicate execution by checking the hash-based output key.
+The hash is used as part of the output key.  
+If an object with the same hash already exists in S3, the pipeline skips execution.
+
+This guarantees:
+
+- No duplicate processing  
+- Safe retries  
+- Deterministic outputs  
 
 ---
 
 ## 🧠 Design Principles
 
-- Clean separation of concerns
-- Fail-fast schema validation
-- In-memory processing (no disk writes)
-- Content-based deduplication
-- Containerized serverless deployment
+- Separation of concerns (clean module boundaries)  
+- Fail-fast schema validation  
+- Stateless Lambda execution  
+- In-memory processing (no disk writes)  
+- Content-based deduplication  
+- Containerized serverless deployment  
+
+---
 
 ## 🐳 Build and Push to Amazon ECR
 
-1. Authenticate Docker with AWS:
+### 1️⃣ Authenticate Docker
 
+```bash
 aws ecr get-login-password --region <region> \
 | docker login \
 --username AWS \
 --password-stdin <account-id>.dkr.ecr.<region>.amazonaws.com
+```
 
-2. Build the image:
+### 2️⃣ Build Image
 
+```bash
 docker build -t data-ingestion-lambda .
+```
 
-3. Tag the image:
+### 3️⃣ Tag Image
 
+```bash
 docker tag data-ingestion-lambda:latest \
 <account-id>.dkr.ecr.<region>.amazonaws.com/data-ingestion-lambda:latest
+```
 
-4. Push the image:
+### 4️⃣ Push Image
 
+```bash
 docker push <account-id>.dkr.ecr.<region>.amazonaws.com/data-ingestion-lambda:latest
+```
 
-5. Update the Lambda function to use the new image version.
+### 5️⃣ Update Lambda
+
+Update the Lambda function configuration to reference the new image version.
+
+---
 
 ## 🔔 S3 Trigger Configuration
 
-The Lambda function is triggered automatically when a new CSV file
-is uploaded to a designated S3 bucket.
-
-Trigger type: S3 Event Notification  
-Event: ObjectCreated (Put)  
-Filter: *.csv  
+- Trigger Type: S3 Event Notification  
+- Event: ObjectCreated (Put)  
+- Filter: `*.csv`  
 
 This enables fully automated ingestion without manual execution.
 
-## 🏗️ Architecture Diagram
-mermaid
-flowchart TD
-
-    A[S3 Bucket<br>CSV Upload] -->|ObjectCreated Event| B[Lambda Function<br>Container Image]
-
-    B --> C[Download File from S3]
-    C --> D[Calculate MD5 Hash]
-
-    D --> E{Already Processed?}
-
-    E -- Yes --> F[Skip Processing]
-    E -- No --> G[Normalize Data]
-
-    G --> H[Validate Schema]
-    H --> I[Row-level Validation]
-
-    I --> J[Valid Records]
-    I --> K[Invalid Records]
-
-    J --> L[Upload to Processed/]
-    K --> M[Upload to Errors/]
+---
