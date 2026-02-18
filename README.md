@@ -1,8 +1,6 @@
-# Containerized Serverless Data Ingestion Pipeline
+# Event-Driven Idempotent Data Pipeline on AWS
 
-A production-style, event-driven data ingestion pipeline built on AWS using containerized Lambda.
-
-The system performs schema validation, row-level validation, normalization, and content-based idempotency using MD5 hashing.
+A cloud-native, containerized AWS Lambda pipeline that performs schema validation, row-level validation, normalization, and content-based idempotent processing of CSV datasets.
 
 ---
 
