@@ -1,0 +1,8 @@
+user_id,name,email,signup_date,country,age,subscription_tier
+1, Juan Perez , JUAN@EMAIL.COM ,2024-01-10, argentina ,30,BASIC
+2,Maria Lopez,maria@email.com,2023-11-22,brasil,25,premium
+3,Carlos Ruiz,carlos@email,2024-02-01,chile,28,free
+4,Ana Torres,ana@email.com,invalid_date,uruguay,22,basic
+5,Pedro Gomez,pedro@email.com,2024-02-05,peru,-5,free
+6,Laura Diaz,laura@email.com,2024-01-15,colombia,35,VIP
+2,Maria Lopez Duplicate,maria@email.com,2023-11-22,brasil,25,premium
